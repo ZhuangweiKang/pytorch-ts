@@ -15,7 +15,7 @@ class TransformedIterableDataset(IterableDataset):
         transform: Transformation,
         is_train: bool = True,
         shuffle_buffer_length: Optional[int] = None,
-        cache_data: bool = False,
+        cache_data: bool = False
     ):
         super().__init__()
         self.shuffle_buffer_length = shuffle_buffer_length

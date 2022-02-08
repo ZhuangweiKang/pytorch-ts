@@ -1,3 +1,4 @@
+from random import shuffle
 from typing import NamedTuple, Optional
 from functools import partial
 
@@ -162,6 +163,35 @@ class PyTorchEstimator(Estimator):
             ),
         )
 
+    def evaluate(
+        self,
+        trained_net,
+        test_data: Dataset,
+        cache_data: bool = False
+    ):
+        transformation = self.create_transformation()
+        input_names = get_module_forward_input_names(trained_net)
+
+        with env._let(max_idle_transforms=maybe_len(test_data) or 0):
+            testing_instance_splitter = self.create_instance_splitter("validation")
+        testing_iter_dataset = TransformedIterableDataset(
+            dataset=test_data,
+            transform=transformation
+            + testing_instance_splitter
+            + SelectFields(input_names),
+            is_train=False,
+            shuffle_buffer_length=None,
+            cache_data=cache_data
+        )
+        
+        testing_data_loader = DataLoader(testing_iter_dataset, shuffle=False)
+
+        loss = self.trainer.test(
+            net=trained_net,
+            test_iter=testing_data_loader
+        )
+        return loss
+
     @staticmethod
     def _worker_init_fn(worker_id):
         np.random.seed(np.random.get_state()[1][0] + worker_id)
@@ -175,8 +205,8 @@ class PyTorchEstimator(Estimator):
         shuffle_buffer_length: Optional[int] = None,
         cache_data: bool = False,
         **kwargs,
-    ) -> PyTorchPredictor:
-        return self.train_model(
+    ):
+        trained_model = self.train_model(
             training_data,
             validation_data,
             num_workers=num_workers,
@@ -184,4 +214,5 @@ class PyTorchEstimator(Estimator):
             shuffle_buffer_length=shuffle_buffer_length,
             cache_data=cache_data,
             **kwargs,
-        ).predictor
+        )
+        return trained_model

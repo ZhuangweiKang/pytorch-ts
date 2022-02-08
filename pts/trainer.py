@@ -124,3 +124,22 @@ class Trainer:
 
             # mark epoch end time and log time cost of current epoch
             toc = time.time()
+
+    
+    def test(self, net: nn.Module, test_iter: DataLoader):
+        all_loss = []
+        it = iter(test_iter)
+        for batch_no, data_entry in enumerate(it):
+            inputs = [v.to(self.device) for v in data_entry.values()]
+            output = net(*inputs)
+
+            if isinstance(output, (list, tuple)):
+                loss = output[1]
+            else:
+                loss = output
+
+            all_loss.append(loss)
+
+            if self.num_batches_per_epoch == batch_no+1:
+                break
+        return all_loss

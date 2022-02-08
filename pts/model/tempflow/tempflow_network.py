@@ -364,6 +364,7 @@ class TempFlowTrainingNetwork(nn.Module):
         """
 
         seq_len = self.context_length + self.prediction_length
+        # print('past_observed_values:', past_observed_values)
 
         # unroll the decoder in "training mode", i.e. by providing future data
         # as well
